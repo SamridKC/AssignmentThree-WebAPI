@@ -1,10 +1,8 @@
 var express = require('express');
-var http = require('http');
 var bodyParser = require('body-parser');
 var passport = require('passport');
-var authController = require('./auth');
 var authJwtController = require('./auth_jwt');
-db = require('./db')(); //global hack
+var User = require('./Users');
 var jwt = require('jsonwebtoken');
 
 var app = express();
@@ -17,28 +15,6 @@ var router = express.Router();
 
 router.route('/post')
     .post(function (req, res) {
-        var header = req.headers;
-        var body = req.body;
-
-        if (Object.keys(req.headers).length === 0) {
-            header = "No header sent";
-        }
-        if (Object.keys(req.body).length === 0) {
-            body = "No Body sent";
-        }
-            console.log(req.body);
-            res = res.status(200);
-            if (req.get('Content-Type')) {
-                console.log("Content-Type: " + req.get('Content-Type'));
-                res = res.type(req.get('Content-Type'));
-            }
-//            res.send(req.body);
-            res.json({Headers: header, Body: body, KEY: process.env.UNIQUE_KEY});
-        }
-    );
-
-router.route('/get')
-    .get(function (req, res) {
             var header = req.headers;
             var body = req.body;
 
@@ -57,53 +33,7 @@ router.route('/get')
 //            res.send(req.body);
             res.json({Headers: header, Body: body, KEY: process.env.UNIQUE_KEY});
         }
-    );
-
-router.route('/put')
-    .put(function (req, res) {
-
-            var header = req.headers;
-            var body = req.body;
-
-            if (Object.keys(req.headers).length === 0) {
-                header = "No header sent";
-            }
-            if (Object.keys(req.body).length === 0) {
-                body = "No Body sent";
-            }
-            console.log(req.body);
-            res = res.status(200);
-            if (req.get('Content-Type')) {
-                console.log("Content-Type: " + req.get('Content-Type'));
-                res = res.type(req.get('Content-Type'));
-            }
-//            res.send(req.body);
-            res.json({Headers: header, Body: body, KEY: process.env.UNIQUE_KEY});
-        }
-    );
-
-router.route('/delete')
-    .delete(authController.isAuthenticated, function (req, res) {
-
-            var header = req.headers;
-            var body = req.body;
-
-            if (Object.keys(req.headers).length === 0) {
-                header = "No header sent";
-            }
-            if (Object.keys(req.body).length === 0) {
-                body = "No Body sent";
-            }
-            console.log(req.body);
-            res = res.status(200);
-            if (req.get('Content-Type')) {
-                console.log("Content-Type: " + req.get('Content-Type'));
-                res = res.type(req.get('Content-Type'));
-            }
-//            res.send(req.body);
-            res.json({Headers: header, Body: body, KEY: process.env.UNIQUE_KEY});
-        }
-    );
+        );
 
 router.route('/postjwt')
     .post(authJwtController.isAuthenticated, function (req, res) {
@@ -117,38 +47,76 @@ router.route('/postjwt')
         }
     );
 
+router.route('/users/:userId')
+//    .get(authJwtController.isAuthenticated, function (req, res) {
+    .get(function (req, res) {
+        var id = req.params.userId;
+        User.findById(id, function(err, user) {
+            if (err) res.send(err);
+
+            var userJson = JSON.stringify(user);
+            // return that user
+            res.json(user);
+        });
+    });
+
+router.route('/users')
+ //   .get(authJwtController.isAuthenticated, function (req, res) {
+    .get(function (req, res) {
+
+            User.find(function (err, users) {
+            if (err) res.send(err);
+            // return the users
+            res.json(users);
+        });
+    });
+
 router.post('/signup', function(req, res) {
     if (!req.body.username || !req.body.password) {
         res.json({success: false, msg: 'Please pass username and password.'});
-    } else {
-        var newUser = {
-            username: req.body.username,
-            password: req.body.password
-        };
+    }
+    else {
+        var user = new User();
+        user.name = req.body.name;
+        user.username = req.body.username;
+        user.password = req.body.password;
         // save the user
-        db.save(newUser); //no duplicate checking
-        res.json({success: true, msg: 'Successful created new user.'});
+        user.save(function(err) {
+            if (err) {
+                // duplicate entry
+                if (err.code == 11000)
+                    return res.json({ success: false, message: 'A user with that username already exists. '});
+                else
+                    return res.send(err);
+            }
+
+            res.json({ message: 'User created!' });
+        });
     }
 });
 
 router.post('/signin', function(req, res) {
+    var userNew = new User();
+    userNew.name = req.body.name;
+    userNew.username = req.body.username;
+    userNew.password = req.body.password;
 
-    var user = db.findOne(req.body.username);
+    User.findOne({ username: userNew.username }).select('name username password').exec(function(err, user) {
+        if (err) res.send(err);
 
-    if (!user) {
-        res.status(401).send({success: false, msg: 'Authentication failed. User not found.'});
-    }
-    else {
-        // check if password matches
-        if (req.body.password == user.password)  {
-            var userToken = { id : user.id, username: user.username };
-            var token = jwt.sign(userToken, process.env.UNIQUE_KEY);
-            res.json({success: true, token: 'JWT ' + token});
-        }
-        else {
-            res.status(401).send({success: false, msg: 'Authentication failed. Wrong password.'});
-        }
-    };
+        user.comparePassword(userNew.password, function(isMatch){
+            if (isMatch) {
+                var userToken = {id: user._id, username: user.username};
+                var token = jwt.sign(userToken, process.env.SECRET_KEY);
+                res.json({success: true, token: 'JWT ' + token});
+            }
+            else {
+                res.status(401).send({success: false, msg: 'Authentication failed. Wrong password.'});
+            }
+        });
+
+
+    });
 });
 
 app.use('/', router);
