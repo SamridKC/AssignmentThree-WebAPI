@@ -13,28 +13,6 @@ app.use(passport.initialize());
 
 var router = express.Router();
 
-router.route('/post')
-    .post(function (req, res) {
-            var header = req.headers;
-            var body = req.body;
-
-            if (Object.keys(req.headers).length === 0) {
-                header = "No header sent";
-            }
-            if (Object.keys(req.body).length === 0) {
-                body = "No Body sent";
-            }
-            console.log(req.body);
-            res = res.status(200);
-            if (req.get('Content-Type')) {
-                console.log("Content-Type: " + req.get('Content-Type'));
-                res = res.type(req.get('Content-Type'));
-            }
-//            res.send(req.body);
-            res.json({Headers: header, Body: body, KEY: process.env.UNIQUE_KEY});
-        }
-        );
-
 router.route('/postjwt')
     .post(authJwtController.isAuthenticated, function (req, res) {
             console.log(req.body);
@@ -48,8 +26,7 @@ router.route('/postjwt')
     );
 
 router.route('/users/:userId')
-//    .get(authJwtController.isAuthenticated, function (req, res) {
-    .get(function (req, res) {
+    .get(authJwtController.isAuthenticated, function (req, res) {
         var id = req.params.userId;
         User.findById(id, function(err, user) {
             if (err) res.send(err);
@@ -61,10 +38,8 @@ router.route('/users/:userId')
     });
 
 router.route('/users')
- //   .get(authJwtController.isAuthenticated, function (req, res) {
-    .get(function (req, res) {
-
-            User.find(function (err, users) {
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        User.find(function (err, users) {
             if (err) res.send(err);
             // return the users
             res.json(users);

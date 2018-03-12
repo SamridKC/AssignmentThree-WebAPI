@@ -3,7 +3,6 @@ var Schema = mongoose.Schema;
 var bcrypt = require('bcrypt-nodejs');
 
 mongoose.connect(process.env.DB);
-//mongoose.connect('mongodb://localhost/test')
 
 // user schema
 var UserSchema = new Schema({
@@ -33,7 +32,7 @@ UserSchema.methods.comparePassword = function(password, callback) {
     var user = this;
 
     bcrypt.compare(password, user.password, function(err, isMatch) {
-       callback(isMatch) ;
+        callback(isMatch) ;
     });
 };
 
