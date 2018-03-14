@@ -96,7 +96,7 @@ router.post('/signin', function(req, res) {
 });
 
 ////
-router.route('/movies/Create')
+router.route('/movies/Create')  // save/create a new movie
     .post(authJwtController.isAuthenticated, function (req, res) {
 //router.post('/create', function(req, res) {
     if (!req.body.Title) {
@@ -135,6 +135,69 @@ router.route('/movies/Create')
         });
     }
 });
+
+router.route('/movies/Get')  // Get all
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        Movie.find(function (err, movies) {
+            if (err) res.send(err);
+            // return the users
+            res.json(movies);
+        });
+    });
+
+router.route('/movies/Get/:movieId') // Get by Id
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        var id = req.params.movieId;
+        Movie.findById(id, function(err, movie) {
+            if (err) res.send(err);
+
+            var movieJson = JSON.stringify(movie);
+            // return that movie
+            res.json(movie);
+        });
+    });
+
+router.route('/movies/Delete/:movieId') // Delete by Id
+    .delete(authJwtController.isAuthenticated, function (req, res) {
+        var id = req.params.movieId;
+        Movie.findById(id, function(err, movie) {
+            if (err) res.send(err);
+
+           // var movieJson = JSON.stringify(movie);
+            movie.remove();
+            // return that movie
+            res.json({ message: 'The movie you specified has been deleted.' });
+        });
+    });
+
+router.route('/movies/Update/:movieId') // Update by Id
+    .put(authJwtController.isAuthenticated, function (req, res) {
+        var id = req.params.movieId;
+        Movie.findById(id, function(err, movie) {
+            if (err) res.send(err);
+
+            // var movieJson = JSON.stringify(movie);
+            if (req.body.Title) {
+                movie.Title = req.body.Title;
+            }
+            if (req.body.Year) {
+                movie.Year = req.body.Year;
+            }
+            if (req.body.Genre) {
+                movie.Genre = req.body.Genre;
+            }
+            if (req.body.Actors) {
+                movie.Actors = req.body.Actors;
+            }
+
+            movie.save(function(err) {
+                if (err) {
+                    return res.send(err);
+                }
+                res.json({ message: 'The movie you specified has been updated.' });
+            });
+        });
+    });
 ////
 app.use('/', router);
 app.listen(process.env.PORT || 8080);
