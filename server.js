@@ -99,20 +99,30 @@ router.post('/signin', function(req, res) {
 router.route('/movies/Create')
     .post(authJwtController.isAuthenticated, function (req, res) {
 //router.post('/create', function(req, res) {
-    if (!req.body.Title || !req.body.Year || !req.body.Genre) {
-        res.json({success: false, msg: 'Please pass Title, Year, Genre.'});
+    if (!req.body.Title) {
+        res.json({success: false, msg: 'Please pass Title'});
     }
+
+    if (!req.body.Year) {
+            res.json({success: false, msg: 'Please pass Year.'});
+    }
+
+    if (!req.body.Genre) {
+            res.json({success: false, msg: 'Please pass Genre.'});
+    }
+
     else {
-//        var Actor = req.body.Actors;
-        var movie = new Movie(req.body);
-//        movie.Title = req.body.Title;
-//        movie.Year = req.body.Year;
-//        movie.Genre = req.body.Genre;
-//        movie.content.push(Actor);
-//        movie.Actors.ActorName = req.body.Actors.ActorName;
-//        movie.Actors.CharacterName = req.body.Actors.CharacterName;
-//        movie.Actors.fill(req.body.Actors.ActorName, 0, 0);
-//        movie.Actors.fill(req.body.Actors.CharacterName, 1, 1);
+//     var Actor = req.body.Actors;
+       var movie = new Movie();
+       movie.Title = req.body.Title;
+       movie.Year = req.body.Year;
+       movie.Genre = req.body.Genre;
+       movie.Actors = req.body.Actors;
+//       movie.content.push(Actor);
+//       movie.Actors.ActorName = req.body.Actors.ActorName;
+//       movie.Actors.CharacterName = req.body.Actors.CharacterName;
+//       movie.Actors.fill(req.body.Actors.ActorName, 0, 0);
+//       movie.Actors.fill(req.body.Actors.CharacterName, 1, 1);
         // save the movie
         movie.save(function(err) {
             if (err) {
