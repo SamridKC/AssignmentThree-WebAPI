@@ -104,13 +104,16 @@ router.route('/movies/Create')
     }
 
     if (!req.body.Year) {
-            res.json({success: false, msg: 'Please pass Year.'});
+        res.json({success: false, msg: 'Please pass Year.'});
     }
 
     if (!req.body.Genre) {
-            res.json({success: false, msg: 'Please pass Genre.'});
+        res.json({success: false, msg: 'Please pass Genre.'});
     }
 
+    if(req.body.Actors.length < 3) {
+        res.json({success: false, msg: 'Please pass at least three actors.'})
+    }
     else {
 //     var Actor = req.body.Actors;
        var movie = new Movie();
