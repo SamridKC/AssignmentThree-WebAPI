@@ -3,6 +3,7 @@ var bodyParser = require('body-parser');
 var passport = require('passport');
 var authJwtController = require('./auth_jwt');
 var User = require('./Users');
+var Movie = require('./Movie');
 var jwt = require('jsonwebtoken');
 
 var app = express();
@@ -94,5 +95,33 @@ router.post('/signin', function(req, res) {
     });
 });
 
+////
+router.route('/movies/Create')
+    .post(authJwtController.isAuthenticated, function (req, res) {
+//router.post('/create', function(req, res) {
+    if (!req.body.Title || !req.body.Year || !req.body.Genre) {
+        res.json({success: false, msg: 'Please pass Title, Year, Genre.'});
+    }
+    else {
+//        var Actor = req.body.Actors;
+        var movie = new Movie(req.body);
+//        movie.Title = req.body.Title;
+//        movie.Year = req.body.Year;
+//        movie.Genre = req.body.Genre;
+//        movie.content.push(Actor);
+//        movie.Actors.ActorName = req.body.Actors.ActorName;
+//        movie.Actors.CharacterName = req.body.Actors.CharacterName;
+//        movie.Actors.fill(req.body.Actors.ActorName, 0, 0);
+//        movie.Actors.fill(req.body.Actors.CharacterName, 1, 1);
+        // save the movie
+        movie.save(function(err) {
+            if (err) {
+                    return res.send(err);
+            }
+            res.json({ message: 'Movie created!' });
+        });
+    }
+});
+////
 app.use('/', router);
 app.listen(process.env.PORT || 8080);
